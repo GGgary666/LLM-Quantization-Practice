@@ -42,31 +42,7 @@ static void *multithreading_loop_unrolling_worker_func(void *args) {
                 float s_w1 = params->scales[((col + 1) * k + ch) / block_size];
                 float s_w2 = params->scales[((col + 2) * k + ch) / block_size];
                 float s_w3 = params->scales[((col + 3) * k + ch) / block_size];
-#ifdef QM_ARM
-                // order of weights with QM_ARM:
-                // origin order: (w0,w1), (w2,w3), (w4,w5), (w6,w7), (w8, w9), ... (w30,w31)
-                // QM_ARM order: (w0,w16),(w1,w17),(w2,w18),(w3,w19),(w4, w20),... (w15,w31)
-                //               |--|
-                //               4 bits
-                //               |------|
-                //               8 bits (byte)
-                //            low|----------------------------------------------------------|high
-                //               0                         128 bit                         127
-                // process 16 bytes of weigths (128 bit) = 1 block for each of unrolled `col`
-                // intermediate variable to store sum of integer multiplication and accumulation
-                int intermediate_sum0 = 0, intermediate_sum1 = 0, intermediate_sum2 = 0, intermediate_sum3 = 0;
-                for (int qj = 0; qj < 16; qj++) {
-                    // TODO: decode a packed byte into two int8 in the range of (-8, 7)
 
-                    // TODO: int8 multiply and accumulate operation
-                }
-                // dequantize the sum into floating point
-                acc0 += (float)intermediate_sum0 * s_a * s_w0;
-                acc1 += (float)intermediate_sum1 * s_a * s_w1;
-                acc2 += (float)intermediate_sum2 * s_a * s_w2;
-                acc3 += (float)intermediate_sum3 * s_a * s_w3;
-                ch += block_size;
-#endif
 #ifdef QM_x86
                 // scales of the second block
                 float s_w0_2nd = params->scales[(col * k + ch) / block_size + 1];
